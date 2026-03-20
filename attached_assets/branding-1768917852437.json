@@ -1,0 +1,64 @@
+{
+  "colorScheme": "light",
+  "fonts": [
+    {
+      "family": "Monument Grotesk Variable",
+      "count": 14
+    },
+    {
+      "family": "Inter",
+      "count": 4
+    },
+    {
+      "family": "sans-serif",
+      "count": 4
+    }
+  ],
+  "colors": {
+    "primary": "#EA337A",
+    "accent": "#EA337A",
+    "background": "#FFFFFF",
+    "textPrimary": "#262626",
+    "link": "#EA337A"
+  },
+  "typography": {
+    "fontFamilies": {
+      "primary": "Inter",
+      "heading": "Monument Grotesk Variable"
+    },
+    "fontStacks": {
+      "body": [
+        "Inter",
+        "sans-serif"
+      ],
+      "heading": [
+        "Monument Grotesk Variable"
+      ],
+      "paragraph": [
+        "Inter",
+        "sans-serif"
+      ]
+    },
+    "fontSizes": {
+      "h1": "16.4275px",
+      "h2": "16.4275px",
+      "body": "14.5px"
+    }
+  },
+  "spacing": {
+    "baseUnit": 4,
+    "borderRadius": "7px"
+  },
+  "components": {},
+  "images": {
+    "logo": null,
+    "favicon": "File saved at: attached_assets/favicon.ico",
+    "ogImage": "File saved at: attached_assets/ogImage.jpg"
+  },
+  "__framework_hints": [],
+  "confidence": {
+    "buttons": 0,
+    "colors": 0,
+    "overall": 0
+  }
+}

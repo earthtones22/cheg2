@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Megan Wake – Portfolio</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #fff;
+      color: #262626;
+      line-height: 1.5;
+    }
+
+    .container { display: flex; min-height: 100vh; }
+
+    aside {
+      width: 320px;
+      padding: 48px;
+      position: fixed;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    main {
+      margin-left: 320px;
+      flex: 1;
+      padding: 48px;
+      display: flex;
+      justify-content: flex-end;
+      padding-right: 80px;
+    }
+
+    h1 { font-size: 10px; font-weight: 500; margin-bottom: 8px; text-transform: lowercase; }
+
+    .bio {
+      font-size: 10px;
+      color: #666;
+      margin-bottom: 32px;
+      max-width: 200px;
+    }
+
+    .section-title { font-size: 10px; margin-bottom: 12px; }
+
+    .projects-list {
+      list-style: none;
+      margin-bottom: 48px;
+    }
+
+    .projects-list li {
+      font-size: 10px;
+      cursor: pointer;
+      color: #999;
+      margin-bottom: 4px;
+      transition: color 0.2s;
+    }
+
+    .projects-list li:hover,
+    .projects-list li.active { color: #262626; }
+
+    .contact-links a {
+      display: block;
+      font-size: 10px;
+      color: #262626;
+      text-decoration: none;
+      margin-bottom: 4px;
+    }
+
+    .copyright { font-size: 10px; color: #999; }
+
+    /* Project Content Area */
+    .project-content { display: none; max-width: 520px; animation: fadeIn 0.4s ease; }
+    .project-content.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .project-title { font-size: 10px; font-weight: 500; margin-bottom: 2px; }
+    .project-meta { font-size: 10px; color: #666; margin-bottom: 24px; }
+
+    .project-image {
+      width: 100%;
+      height: auto;
+      display: block;
+      margin-bottom: 20px;
+    }
+
+    .project-caption {
+      font-size: 10px;
+      color: #666;
+      margin-top: 24px;
+      white-space: pre-wrap; /* This allows for paragraph breaks from the sheet */
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <aside>
+      <div>
+        <h1>megan wake</h1>
+        <p class="bio">
+          Production design, apparel design, creative production with a focus on accessibility to outdoor spaces through information, objects, and the built environment.
+        </p>
+
+        <p class="section-title">Projects ↓</p>
+        <ul class="projects-list" id="projects-list">
+            <!-- Projects will load here -->
+        </ul>
+
+        <div class="contact-links">
+          <a href="mailto:hello@meganwake.work">Email</a>
+          <a href="#">Instagram</a>
+          <a href="#">CV</a>
+        </div>
+      </div>
+
+      <p class="copyright">©2025</p>
+    </aside>
+
+    <main>
+      <div id="projects-container">
+          <!-- Project details will load here -->
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // 1. YOUR GOOGLE SHEET API URL
+    const SHEET_URL = "https://opensheet.elk.sh/1hS9Ukw_GGjBE506YUN5_WtYJHYKOj2_nlCJwkmTctOk/Sheet1";
+
+    let projects = [];
+
+    fetch(SHEET_URL)
+      .then(res => res.json())
+      .then(data => {
+        if (!Array.isArray(data)) {
+            console.error("Data is not an array. Check Sheet permissions.");
+            return;
+        }
+
+        // 2. Filter for 'live' status and sort by order
+        projects = data
+          .filter(p => p.title && p.status === 'live')
+          .sort((a, b) => Number(a.order || 99) - Number(b.order || 99));
+        
+        buildWebsite();
+      });
+
+    function buildWebsite() {
+      const list = document.getElementById("projects-list");
+      const container = document.getElementById("projects-container");
+
+      projects.forEach((project, index) => {
+        // Create Sidebar Link
+        const li = document.createElement("li");
+        li.textContent = project.title;
+        li.onclick = () => showProject(index);
+        if (index === 0) li.classList.add("active");
+        list.appendChild(li);
+
+        // Create Project Detail Page
+        const div = document.createElement("div");
+        div.className = "project-content";
+        if (index === 0) div.classList.add("active");
+        div.id = `project-${index}`;
+
+        // Handle Multiple Images (split by comma)
+        let imageHtml = "";
+        if (project.images) {
+          const imageList = project.images.split(",");
+          imageHtml = imageList.map(url => 
+            `<img class="project-image" src="${url.trim()}" alt="${project.title}">`
+          ).join("");
+        }
+
+        div.innerHTML = `
+          <h2 class="project-title">${project.title}</h2>
+          <p class="project-meta">${project.subtitle || ""}</p>
+          <div class="images-box">${imageHtml}</div>
+          <p class="project-caption">${project.description || ""}</p>
+        `;
+
+        container.appendChild(div);
+      });
+    }
+
+    function showProject(index) {
+      // Hide all projects
+      document.querySelectorAll(".project-content").forEach(el => el.classList.remove("active"));
+      // Deactivate all links
+      document.querySelectorAll(".projects-list li").forEach(el => el.classList.remove("active"));
+
+      // Show selected project
+      const targetProject = document.getElementById(`project-${index}`);
+      const targetLink = document.querySelectorAll(".projects-list li")[index];
+
+      if(targetProject) targetProject.classList.add("active");
+      if(targetLink) targetLink.classList.add("active");
+
+      // Scroll top of main area
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  </script>
+</body>
+</html>

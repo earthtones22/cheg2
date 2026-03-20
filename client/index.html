@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Megan Wake</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    /* 1. RESET & COMPACT TYPOGRAPHY */
+    * { margin: 0; padding: 0; box-sizing: border-box; cursor: none; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #fff;
+      color: #000;
+      line-height: 1.2; /* Tighter line spacing */
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #cursor {
+      position: fixed;
+      width: 5px;
+      height: 5px;
+      background: #000;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transition: transform 0.2s ease;
+    }
+
+    .container { display: flex; min-height: 100vh; }
+
+    /* 2. CORNER POSITIONING */
+    aside {
+      width: 280px;
+      padding: 20px; 
+      position: fixed;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: #fff;
+      z-index: 10;
+    }
+
+    main {
+      margin-left: 450px; 
+      flex: 1;
+      padding: 20px;
+    }
+
+    /* 3. 3-COLUMN CONTENT */
+    .project-content { 
+      display: none; 
+      width: 100%;
+      max-width: 1300px;
+      gap: 120px; /* Slightly tighter column gap */
+      animation: fadeIn 0.6s ease;
+    }
+    .project-content.active { display: flex; } 
+
+    .project-info-col {
+      width: 300px;
+      position: fixed;
+      top: 20px;
+      flex-shrink: 0;
+    }
+
+    .project-images-col {
+      flex: 1;
+      margin-left: 320px;
+      max-width: 800px; 
+    }
+
+    /* 4. SIDEBAR ELEMENTS */
+    h1 { font-size: 11px; font-weight: 500; margin-bottom: 6px; text-transform: lowercase; }
+
+    .bio {
+      font-size: 11px;
+      color: #000;
+      margin-bottom: 20px;
+      max-width: 200px;
+    }
+
+    #mtl-time { font-size: 11px; color: #000; margin-bottom: 30px; }
+
+    .section-title { font-size: 11px; margin-bottom: 8px; color: #000; }
+
+    /* Numbered list with Indent */
+    .nav-list { 
+      list-style-type: decimal; 
+      margin-left: 15px; /* Creates the indent */
+      margin-bottom: 30px; 
+    }
+
+    .nav-list li {
+      font-size: 11px;
+      color: #000;
+      margin-bottom: 2px;
+      padding-left: 8px; /* Spacing between number and text */
+      transition: color 0.3s ease;
+    }
+
+    .nav-list li:hover { color: #3d4faf; }
+    .nav-list li.active { color: #3d4faf; }
+
+    .contact-links { margin-bottom: 20px; }
+    .contact-links a {
+      display: block;
+      font-size: 11px;
+      color: #000;
+      text-decoration: none;
+      margin-bottom: 2px;
+    }
+
+    .copyright { font-size: 11px; color: #000; }
+
+    /* 5. PROJECT TEXT */
+    .project-title { font-size: 11px; font-weight: 500; margin-bottom: 2px; }
+    .project-meta { font-size: 11px; color: #000; margin-bottom: 20px; }
+
+    .project-image {
+      width: 100%;
+      height: auto;
+      display: block;
+      margin-bottom: 20px;
+    }
+
+    .project-caption {
+      font-size: 11px;
+      color: #000;
+      white-space: pre-wrap;
+      line-height: 1.4; /* Slightly looser than sidebar for readability */
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* OTHER LINK */
+    .other-link {
+      font-size: 11px;
+      color: #666;
+      text-decoration: none;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .other-link:hover { color: #3d4faf; }
+    .other-link.active { color: #3d4faf; }
+
+    /* HOMEPAGE SLIDESHOW */
+    .home-slideshow {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      width: 100%;
+      padding-right: 10%;
+    }
+    .home-slideshow.hidden { display: none; }
+    .home-slideshow img {
+      max-width: 800px;
+      max-height: 90vh;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      margin-bottom: 20px;
+      cursor: pointer;
+    }
+    .home-slideshow .slide-caption {
+      font-size: 11px;
+      color: #666;
+      text-align: right;
+    }
+    
+    /* LOADING SPINNER */
+    .loading-spinner {
+      width: 30px;
+      height: 30px;
+      border: 2px solid #eee;
+      border-top-color: #3d4faf;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 20px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    /* BACK TO TOP BUTTON */
+    .back-to-top {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 40px;
+      height: 40px;
+      background: #262626;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      z-index: 100;
+    }
+    .back-to-top.visible { opacity: 0.7; visibility: visible; }
+    .back-to-top:hover { opacity: 1; }
+
+    /* GALLERY GRID (shown in main area) */
+    .gallery-content {
+      display: none;
+      animation: fadeIn 0.6s ease;
+    }
+    .gallery-content.active { display: block; }
+    .gallery-grid {
+      columns: 2;
+      column-gap: 15px;
+    }
+    .gallery-grid img {
+      width: 100%;
+      height: auto;
+      display: block;
+      margin-bottom: 15px;
+    }
+
+    /* MOBILE ADJUSTMENT */
+    @media (max-width: 1000px) {
+      aside { position: relative; width: 100%; height: auto; padding: 20px; }
+      main { margin-left: 0; padding: 20px; }
+      .container { flex-direction: column; min-height: 100vh; }
+      .project-content.active { flex-direction: column; gap: 30px; }
+      .project-info-col { position: relative; top: auto; width: 100%; }
+      .project-images-col { margin-left: 0; }
+      #cursor { display: none; }
+      * { cursor: auto !important; }
+      .other-link { display: none; }
+      .bottom-section { display: none; }
+      .mobile-footer {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 40px 20px;
+        gap: 15px;
+      }
+      .mobile-footer .other-link { display: block; margin-bottom: 0; }
+      .mobile-footer .contact-links { display: flex; gap: 15px; }
+      .mobile-footer .contact-links a { font-size: 12px; }
+      .mobile-footer .copyright { margin: 0; }
+      .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+      .gallery-grid img { max-width: 100%; }
+      .home-slideshow {
+        padding-right: 0;
+        align-items: center;
+      }
+      .home-slideshow img {
+        max-width: 90%;
+        max-height: 50vh;
+      }
+    }
+    @media (min-width: 1001px) {
+      .mobile-footer { display: none; }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="cursor"></div>
+
+  <div class="container">
+    <aside>
+      <div>
+        <h1><a href="#" id="home-link" style="text-decoration: none; color: inherit; transition: color 0.3s ease;" onmouseover="this.style.color='#3d4faf'" onmouseout="this.style.color='inherit'">megan wake</a></h1>
+        <p class="bio">
+          Production design, apparel design, creative production with a focus on accessibility to outdoor spaces.
+        </p>
+        
+        <p id="mtl-time">Montreal — 00:00:00</p>
+
+        <p class="section-title">Index</p>
+        <ol class="nav-list" id="projects-list"></ol>
+
+        <a href="#" class="other-link" id="other-link"><br><br><br><br><i>Are you a leaf or a pixel?</i></a>
+      </div>
+
+      <div class="bottom-section">
+        <div class="contact-links">
+          <a href="https://www.instagram.com/chegwake/" target="_blank" rel="noopener noreferrer">Instagram</a>
+          <a href="mailto:m.aubrywake@gmail.com">m.aubrywake@gmail.com</a>
+        </div>
+        <p class="copyright">©2026</p>
+      </div>
+    </aside>
+
+    <main>
+      <div id="home-slideshow" class="home-slideshow">
+        <div id="slide-loader" class="loading-spinner"></div>
+        <img id="slide-image" src="" alt="slideshow" style="display: none;">
+        <p id="slide-caption" class="slide-caption"></p>
+      </div>
+      <div id="projects-container"></div>
+    </main>
+
+    <button id="back-to-top" class="back-to-top">↑</button>
+
+    <footer class="mobile-footer">
+      <a href="#" class="other-link" id="other-link-mobile">Are you a leaf or a pixel?</a>
+      <div class="contact-links">
+        <a href="mailto:hello@meganwake.work">Email</a>
+        <a href="https://www.instagram.com/chegwake/" target="_blank" rel="noopener noreferrer">Instagram</a>
+      </div>
+      <p class="copyright">©2025</p>
+    </footer>
+  </div>
+
+
+  <script>
+    // CURSOR
+    const cursor = document.getElementById('cursor');
+    document.addEventListener('mousemove', (e) => {
+      cursor.style.left = e.clientX + 'px';
+      cursor.style.top = e.clientY + 'px';
+    });
+    document.addEventListener('mouseover', (e) => {
+      if (e.target.tagName === 'A' || e.target.tagName === 'LI') cursor.style.transform = 'scale(3)';
+    });
+    document.addEventListener('mouseout', (e) => {
+      if (e.target.tagName === 'A' || e.target.tagName === 'LI') cursor.style.transform = 'scale(1)';
+    });
+
+    // TIME
+    function updateTime() {
+      const options = { timeZone: "America/Montreal", hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" };
+      document.getElementById('mtl-time').innerHTML = "Montreal — " + new Intl.DateTimeFormat([], options).format(new Date());
+    }
+    updateTime();
+    setInterval(updateTime, 1000);
+
+    // FETCH DATA
+    const SHEET_URL = "https://opensheet.elk.sh/1hS9Ukw_GGjBE506YUN5_WtYJHYKOj2_nlCJwkmTctOk/Sheet1";
+    let allData = [];
+    let slideshowData = [];
+    let currentSlide = 0;
+    let slideshowInterval = null;
+
+    fetch(SHEET_URL)
+      .then(res => res.json())
+      .then(data => {
+        if (!Array.isArray(data)) return;
+        allData = data.filter(p => p.title && p.status === 'live')
+                     .sort((a, b) => Number(a.order || 99) - Number(b.order || 99));
+        buildWebsite();
+        buildSlideshow();
+        startSlideshow();
+      });
+
+    function buildWebsite() {
+      const projList = document.getElementById("projects-list");
+      const container = document.getElementById("projects-container");
+      let galleryImages = [];
+
+      allData.forEach((item, index) => {
+        if (item.type === 'gallery') {
+          // Collect gallery images
+          if (item.images) {
+            galleryImages = galleryImages.concat(item.images.split(",").map(u => u.trim()));
+          }
+        } else {
+          // Regular projects go to project list
+          const li = document.createElement("li");
+          li.textContent = item.title;
+          li.onclick = () => showItem(index);
+          projList.appendChild(li);
+
+          const div = document.createElement("div");
+          div.className = "project-content";
+          div.id = `item-${index}`;
+
+          let imageHtml = "";
+          if (item.images) {
+            imageHtml = item.images.split(",").map(url => 
+              `<img class="project-image" src="${url.trim()}" alt="${item.title}">`
+            ).join("");
+          }
+
+          div.innerHTML = `
+            <div class="project-info-col">
+              <h2 class="project-title">${item.title}</h2>
+              <p class="project-meta">${item.subtitle || ""}</p>
+              <p class="project-caption">${item.description || ""}</p>
+            </div>
+            <div class="project-images-col">
+              ${imageHtml}
+            </div>
+          `;
+          container.appendChild(div);
+        }
+      });
+
+      // Build gallery content
+      if (galleryImages.length > 0) {
+        const galleryDiv = document.createElement("div");
+        galleryDiv.className = "gallery-content";
+        galleryDiv.id = "gallery-content";
+        galleryDiv.innerHTML = `<div class="gallery-grid">${galleryImages.map(url => 
+          `<img src="${url}" alt="gallery">`
+        ).join("")}</div>`;
+        container.appendChild(galleryDiv);
+
+        document.getElementById("other-link").onclick = (e) => {
+          e.preventDefault();
+          showGallery();
+        };
+        document.getElementById("other-link-mobile").onclick = (e) => {
+          e.preventDefault();
+          showGallery();
+        };
+      }
+    }
+
+    function showGallery() {
+      document.getElementById("home-slideshow").classList.add("hidden");
+      document.querySelectorAll(".project-content").forEach(el => el.classList.remove("active"));
+      document.querySelectorAll(".nav-list li").forEach(el => el.classList.remove("active"));
+      document.getElementById("other-link")?.classList.add("active");
+      document.getElementById("other-link-mobile")?.classList.add("active");
+      document.getElementById("gallery-content").classList.add("active");
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function showItem(index) {
+      document.getElementById("home-slideshow").classList.add("hidden");
+      document.querySelectorAll(".project-content").forEach(el => el.classList.remove("active"));
+      document.querySelectorAll(".gallery-content").forEach(el => el.classList.remove("active"));
+      document.querySelectorAll(".nav-list li").forEach(el => el.classList.remove("active"));
+      document.getElementById("other-link")?.classList.remove("active");
+      document.getElementById("other-link-mobile")?.classList.remove("active");
+      
+      const target = document.getElementById(`item-${index}`);
+      if(target) target.classList.add("active");
+      
+      const allLinks = document.querySelectorAll(".nav-list li");
+      const match = Array.from(allLinks).find(l => l.textContent === allData[index].title);
+      if(match) match.classList.add("active");
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function buildSlideshow() {
+      // Build slideshow from ALL images (projects + gallery)
+      allData.forEach((item, itemIndex) => {
+        if (item.images) {
+          const images = item.images.split(",").map(u => u.trim());
+          images.forEach(img => {
+            if (item.type === 'gallery') {
+              slideshowData.push({
+                image: img,
+                caption: item.title || "",
+                projectIndex: null
+              });
+            } else {
+              slideshowData.push({
+                image: img,
+                caption: `${item.title} (${item.subtitle || ""})`,
+                projectIndex: itemIndex
+              });
+            }
+          });
+        }
+      });
+      // Shuffle slideshow order
+      for (let i = slideshowData.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [slideshowData[i], slideshowData[j]] = [slideshowData[j], slideshowData[i]];
+      }
+      // Preload images
+      slideshowData.forEach(slide => {
+        const img = new Image();
+        img.src = slide.image;
+      });
+    }
+
+    function startSlideshow() {
+      if (slideshowData.length === 0) return;
+      showSlide(0);
+      slideshowInterval = setInterval(() => {
+        nextSlide();
+      }, 1500);
+    }
+
+    function nextSlide() {
+      currentSlide = (currentSlide + 1) % slideshowData.length;
+      fadeToSlide(currentSlide);
+    }
+
+    function prevSlide() {
+      currentSlide = (currentSlide - 1 + slideshowData.length) % slideshowData.length;
+      fadeToSlide(currentSlide);
+    }
+
+    function fadeToSlide(index) {
+      const slideImg = document.getElementById("slide-image");
+      const slideCaption = document.getElementById("slide-caption");
+      
+      if (slideshowData[index]) {
+        slideImg.src = slideshowData[index].image;
+        slideCaption.textContent = slideshowData[index].caption;
+      }
+    }
+
+    function showSlide(index) {
+      const slideImg = document.getElementById("slide-image");
+      const slideCaption = document.getElementById("slide-caption");
+      const loader = document.getElementById("slide-loader");
+      
+      if (slideshowData[index]) {
+        const img = new Image();
+        img.onload = () => {
+          loader.style.display = "none";
+          slideImg.style.display = "block";
+          slideImg.src = slideshowData[index].image;
+          slideCaption.textContent = slideshowData[index].caption;
+        };
+        img.src = slideshowData[index].image;
+      }
+    }
+
+    // Click on slideshow image to go to project
+    document.getElementById("slide-image").onclick = () => {
+      const slide = slideshowData[currentSlide];
+      if (slide && slide.projectIndex !== null) {
+        showItem(slide.projectIndex);
+      }
+    };
+
+    // Keyboard navigation for slideshow
+    document.addEventListener("keydown", (e) => {
+      const slideshow = document.getElementById("home-slideshow");
+      if (slideshow.classList.contains("hidden")) return;
+      
+      if (e.key === "ArrowRight") {
+        clearInterval(slideshowInterval);
+        nextSlide();
+        slideshowInterval = setInterval(nextSlide, 1500);
+      } else if (e.key === "ArrowLeft") {
+        clearInterval(slideshowInterval);
+        prevSlide();
+        slideshowInterval = setInterval(nextSlide, 1500);
+      }
+    });
+
+    // Back to top button
+    const backToTopBtn = document.getElementById("back-to-top");
+    window.addEventListener("scroll", () => {
+      if (window.scrollY > 300) {
+        backToTopBtn.classList.add("visible");
+      } else {
+        backToTopBtn.classList.remove("visible");
+      }
+    });
+    backToTopBtn.onclick = () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    function showHome() {
+      document.querySelectorAll(".project-content").forEach(el => el.classList.remove("active"));
+      document.querySelectorAll(".gallery-content").forEach(el => el.classList.remove("active"));
+      document.querySelectorAll(".nav-list li").forEach(el => el.classList.remove("active"));
+      document.getElementById("other-link")?.classList.remove("active");
+      document.getElementById("other-link-mobile")?.classList.remove("active");
+      document.getElementById("home-slideshow").classList.remove("hidden");
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Home link click handler
+    document.getElementById("home-link").onclick = (e) => {
+      e.preventDefault();
+      showHome();
+    };
+  </script>
+</body>
+</html>
