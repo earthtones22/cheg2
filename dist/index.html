@@ -27,6 +27,8 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      z-index: 100;
+      background: #fff;
     }
 
     main {
@@ -38,7 +40,7 @@
       padding-right: 80px;
     }
 
-    h1 { font-size: 10px; font-weight: 500; margin-bottom: 2px; text-transform: lowercase; }
+    h1 { font-size: 10px; font-weight: 500; margin-bottom: 2px; text-transform: lowercase; cursor: pointer; }
 
     .bio {
       font-size: 10px;
@@ -68,7 +70,6 @@
       transition: color 0.2s;
     }
 
-    /* PROJECT HOVER IS NOW BLUE */
     .projects-list li:hover,
     .projects-list li.active { color: #3d4faf; }
 
@@ -81,10 +82,8 @@
       transition: color 0.2s;
     }
 
-    /* CONTACT HOVER IS NOW BLUE */
     .contact-links a:hover { color: #3d4faf; }
 
-    /* BLUE UNDERLINED LINK */
     .special-link {
       display: block;
       font-size: 10px;
@@ -93,13 +92,26 @@
       text-underline-offset: 2px;
       margin-bottom: 12px;
       font-style: italic;
+      cursor: pointer;
     }
-    .special-link:hover { opacity: 0.7; }
 
     .copyright { font-size: 10px; color: #999; }
 
-    .project-content { display: none; max-width: 520px; animation: fadeIn 0.4s ease; }
-    .project-content.active { display: block; }
+    /* CONTENT AREAS */
+    .project-content, .gallery-content { display: none; max-width: 520px; animation: fadeIn 0.4s ease; }
+    .project-content.active, .gallery-content.active { display: block; }
+
+    /* FLASHING HOME */
+    #home-flash {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      width: 100%;
+      max-width: 600px;
+    }
+    #home-flash img { width: 100%; height: auto; display: block; }
+    #home-flash.hidden { display: none; }
+    .flash-caption { font-size: 10px; color: #999; margin-top: 8px; text-transform: uppercase; }
 
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(5px); }
@@ -108,20 +120,12 @@
 
     .project-title { font-size: 10px; font-weight: 500; margin-bottom: 2px; }
     .project-meta { font-size: 10px; color: #666; margin-bottom: 24px; }
+    .project-image { width: 100%; height: auto; display: block; margin-bottom: 20px; }
+    .project-caption { font-size: 10px; color: #666; margin-top: 24px; white-space: pre-wrap; }
 
-    .project-image {
-      width: 100%;
-      height: auto;
-      display: block;
-      margin-bottom: 20px;
-    }
-
-    .project-caption {
-      font-size: 10px;
-      color: #666;
-      margin-top: 24px;
-      white-space: pre-wrap; 
-    }
+    /* GALLERY GRID */
+    .gallery-grid { columns: 2; column-gap: 10px; }
+    .gallery-grid img { width: 100%; margin-bottom: 10px; display: block; }
   </style>
 </head>
 
@@ -129,19 +133,14 @@
   <div class="container">
     <aside>
       <div>
-        <h1>megan wake</h1>
-        <p class="bio">
-          Production, apparel & graphic design
-        </p>
-
+        <h1 onclick="showHome()">megan wake</h1>
+        <p class="bio">Production, apparel & graphic design</p>
         <p id="mtl-time">Montreal — 00:00:00</p>
 
         <p class="section-title">Projects ↓</p>
-        <ul class="projects-list" id="projects-list">
-            <!-- Projects load here -->
-        </ul>
+        <ul class="projects-list" id="projects-list"></ul>
 
-        <a href="mailto:hello@meganwake.work" class="special-link">Are you a leaf or a pixel?</a>
+        <a class="special-link" onclick="showGallery()">Are you a leaf or a pixel?</a>
 
         <div class="contact-links">
           <a href="mailto:hello@meganwake.work">Email</a>
@@ -149,13 +148,17 @@
           <a href="#">CV</a>
         </div>
       </div>
-
       <p class="copyright">©2025</p>
     </aside>
 
     <main>
-      <div id="projects-container">
-          <!-- Project details load here -->
+      <div id="home-flash">
+        <img id="flash-img" src="" alt="">
+        <p id="flash-cap" class="flash-caption"></p>
+      </div>
+      <div id="projects-container"></div>
+      <div id="gallery-container" class="gallery-content">
+        <div class="gallery-grid" id="gallery-grid"></div>
       </div>
     </main>
   </div>
@@ -163,49 +166,69 @@
   <script>
     function updateTime() {
       const options = { timeZone: "America/Montreal", hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" };
-      const formatter = new Intl.DateTimeFormat([], options);
-      document.getElementById('mtl-time').innerHTML = "Montreal — " + formatter.format(new Date());
+      document.getElementById('mtl-time').innerHTML = "Montreal — " + new Intl.DateTimeFormat([], options).format(new Date());
     }
-    setInterval(updateTime, 1000);
-    updateTime();
+    setInterval(updateTime, 1000); updateTime();
 
     const SHEET_URL = "https://opensheet.elk.sh/1hS9Ukw_GGjBE506YUN5_WtYJHYKOj2_nlCJwkmTctOk/Sheet1";
 
     let projects = [];
+    let allImages = [];
+    let flashIndex = 0;
 
     fetch(SHEET_URL)
       .then(res => res.json())
       .then(data => {
         if (!Array.isArray(data)) return;
-        projects = data
-          .filter(p => p.title && p.status === 'live')
-          .sort((a, b) => Number(a.order || 99) - Number(b.order || 99));
+
+        // ROBUST FILTER: Handles "Live", "live", " LIVE " etc.
+        projects = data.filter(p => {
+            const hasTitle = p.title && p.title.trim() !== "";
+            const isLive = p.status && p.status.toLowerCase().trim() === 'live';
+            return hasTitle && isLive;
+        }).sort((a, b) => Number(a.order || 99) - Number(b.order || 99));
+        
         buildWebsite();
+        startFlashing();
       });
 
     function buildWebsite() {
       const list = document.getElementById("projects-list");
       const container = document.getElementById("projects-container");
+      const galleryGrid = document.getElementById("gallery-grid");
 
       projects.forEach((project, index) => {
-        const li = document.createElement("li");
-        li.textContent = project.title;
-        li.onclick = () => showProject(index);
-        if (index === 0) li.classList.add("active");
-        list.appendChild(li);
+        const imageList = project.images ? project.images.split(",").map(url => url.trim()) : [];
+        
+        // 1. Sidebar Index
+        // Only hide from sidebar if explicitly marked 'gallery'. 
+        // If you want ALL 17 in the sidebar, remove the if check.
+        if (project.type !== 'gallery') {
+            const li = document.createElement("li");
+            li.textContent = project.title;
+            li.onclick = () => showProject(index);
+            list.appendChild(li);
+        }
 
+        // 2. Add to Flashing Pool
+        imageList.forEach(url => {
+          allImages.push({ url: url, title: project.title });
+        });
+
+        // 3. Add to Gallery Section
+        if (project.type === 'gallery') {
+          imageList.forEach(url => {
+            const img = document.createElement("img");
+            img.src = url;
+            galleryGrid.appendChild(img);
+          });
+        }
+
+        // 4. Create Project Pages
         const div = document.createElement("div");
         div.className = "project-content";
-        if (index === 0) div.classList.add("active");
         div.id = `project-${index}`;
-
-        let imageHtml = "";
-        if (project.images) {
-          const imageList = project.images.split(",");
-          imageHtml = imageList.map(url => 
-            `<img class="project-image" src="${url.trim()}" alt="${project.title}">`
-          ).join("");
-        }
+        const imageHtml = imageList.map(url => `<img class="project-image" src="${url}">`).join("");
 
         div.innerHTML = `
           <h2 class="project-title">${project.title}</h2>
@@ -217,13 +240,43 @@
       });
     }
 
+    function startFlashing() {
+      if (allImages.length === 0) return;
+      const img = document.getElementById("flash-img");
+      const cap = document.getElementById("flash-cap");
+      setInterval(() => {
+        flashIndex = (flashIndex + 1) % allImages.length;
+        img.src = allImages[flashIndex].url;
+        cap.textContent = allImages[flashIndex].title;
+      }, 500); // 0.5 seconds per flash
+    }
+
     function showProject(index) {
+      hideEverything();
+      const target = document.getElementById(`project-${index}`);
+      if(target) target.classList.add("active");
+      
+      const allLinks = document.querySelectorAll(".projects-list li");
+      allLinks.forEach(link => {
+        if(link.textContent === projects[index].title) link.classList.add("active");
+      });
+    }
+
+    function showGallery() {
+      hideEverything();
+      document.getElementById("gallery-container").classList.add("active");
+    }
+
+    function showHome() {
+      hideEverything();
+      document.getElementById("home-flash").classList.remove("hidden");
+    }
+
+    function hideEverything() {
+      document.getElementById("home-flash").classList.add("hidden");
+      document.getElementById("gallery-container").classList.remove("active");
       document.querySelectorAll(".project-content").forEach(el => el.classList.remove("active"));
       document.querySelectorAll(".projects-list li").forEach(el => el.classList.remove("active"));
-      const targetProject = document.getElementById(`project-${index}`);
-      const targetLink = document.querySelectorAll(".projects-list li")[index];
-      if(targetProject) targetProject.classList.add("active");
-      if(targetLink) targetLink.classList.add("active");
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   </script>
